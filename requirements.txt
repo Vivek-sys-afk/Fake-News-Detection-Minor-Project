@@ -1,0 +1,11 @@
+# Project packages
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+nltk
+joblib
+jupyter
+notebook
+wordcloud
