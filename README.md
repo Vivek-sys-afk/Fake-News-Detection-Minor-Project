@@ -6,7 +6,7 @@ Welcome to the **Fake News Detection** pipeline repository! This project represe
 
 ---
 
-## 🎯 Project Overview
+## Project Overview
 
 This repository contains a comprehensive Jupyter Notebook that covers the end-to-end data science lifecycle. The goal of this project is to classify news articles as **Real** or **Fake** using Natural Language Processing and Machine Learning classification algorithms.
 
@@ -21,7 +21,7 @@ The workflow is broken into 7 main sections:
 
 ---
 
-## 📂 Repository Structure
+## Repository Structure
 
 - `Fake_News_Detection.ipynb`: The main Jupyter Notebook containing the entire pipeline.
 - `datasets/`: Directory containing the datasets used in this project (`WELFake_Dataset.csv` and `IFND_full.csv`).
@@ -30,7 +30,7 @@ The workflow is broken into 7 main sections:
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 To run this project on your local machine, follow these steps:
 
@@ -54,7 +54,7 @@ jupyter notebook Fake_News_Detection.ipynb
 
 ---
 
-## 🛠️ Built With
+## Built With
 
 - **Python** - The core programming language.
 - **Pandas & NumPy** - Data manipulation and analysis.
@@ -64,7 +64,7 @@ jupyter notebook Fake_News_Detection.ipynb
 
 ---
 
-## 📈 Key Visualizations
+## Key Visualizations
 - Class Balance & Semantic Density (Word Counts)
 - Fake vs. Real News Word Clouds
 - Top 20 N-Grams (Unigrams and Bigrams)
@@ -73,6 +73,6 @@ jupyter notebook Fake_News_Detection.ipynb
 
 ---
 
-## 📜 License
+## License
 
 This project is part of an M.Sc. Data Science academic curriculum. Feel free to use and modify it for educational purposes.
