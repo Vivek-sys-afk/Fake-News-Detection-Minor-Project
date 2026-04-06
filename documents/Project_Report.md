@@ -506,14 +506,10 @@ Minor_Project/
 |   |-- WELFake_Dataset.csv       # Global news dataset
 |   |-- IFND_full.csv             # Indian news dataset
 |   |-- IFND_dataset.csv          # IFND subset
-|   |-- Indian_Fake_News.csv      # Indian fake news
-|   |-- Indian_True_News.csv      # Indian true news
-|   |-- liar_dataset/             # LIAR benchmark dataset
 |-- saved_models/                 # Serialized models
 |   |-- best_logistic_regression.pkl  # Best model
 |   |-- tfidf_vectorspace.pkl        # TF-IDF vectorizer
 |-- documents/                    # Project documents
 |   |-- Synopsis.md               # Project synopsis
 |   |-- Project_Report.md         # Project report
-|   |-- Research_Paper.md         # Research paper
 ```
