@@ -10,14 +10,15 @@ Welcome to the **Fake News Detection** pipeline repository! This project represe
 
 This repository contains a comprehensive Jupyter Notebook that covers the end-to-end data science lifecycle. The goal of this project is to classify news articles as **Real** or **Fake** using Natural Language Processing and Machine Learning classification algorithms.
 
-The workflow is broken into 7 main sections:
+The workflow is broken into 8 main sections:
 1. **Library Imports & Setup:** Installing and configuring required tools.
 2. **Data Loading:** Safely loading local datasets (incorporating Global WELFake and Regional IFND datasets).
 3. **Text Preprocessing:** Cleaning raw text data (Regex manipulation, Stopword Removal, and Lemmatization).
 4. **Exploratory Data Analysis (EDA) & Visualization:** Graphing word counts, Class Distributions, Word Clouds, and N-gram frequencies.
 5. **Feature Engineering:** Converting clean text into mathematical features using TF-IDF Vectorized representations.
-6. **Model Training & Evaluation:** Training ML models (Logistic Regression, Naive Bayes, Random Forest) and visualizing their comparative ROC-AUC curves.
-7. **Model Saving:** Serializing algorithms using `joblib` for future production.
+6. **Model Training & Evaluation:** Training base ML models (Logistic Regression, Naive Bayes, Random Forest) and advanced Ensemble models (Voting and Stacking classifiers), followed by visualizing comparative ROC-AUC curves and accuracies.
+7. **Model Persistence:** Serializing the best performing ensemble model and vectorizer using `joblib` for future production.
+8. **Model Testing:** A practical inference function for testing the saved ensemble model on real-world news samples with confidence-based heuristics.
 
 ---
 
@@ -25,7 +26,7 @@ The workflow is broken into 7 main sections:
 
 - `Fake_News_Detection.ipynb`: The main Jupyter Notebook containing the entire pipeline.
 - `datasets/`: Directory containing the datasets used in this project (`WELFake_Dataset.csv` and `IFND_full.csv`).
-- `saved_models/`: Directory where the trained Machine Learning models and TF-IDF Vectorizer are serialized.
+- `saved_models/`: Directory where the trained Machine Learning models (base models and the Stacking ensemble) and TF-IDF Vectorizer are serialized.
 - `requirements.txt`: Python dependencies required to run the notebook.
 
 ---
@@ -59,7 +60,7 @@ jupyter notebook Fake_News_Detection.ipynb
 - **Python** - The core programming language.
 - **Pandas & NumPy** - Data manipulation and analysis.
 - **NLTK (Natural Language Toolkit)** - Text preprocessing and NLP.
-- **Scikit-Learn** - Machine Learning algorithms and feature extraction.
+- **Scikit-Learn** - Machine Learning algorithms, Feature Extraction, and Ensemble architectures (Voting & Stacking).
 - **Matplotlib, Seaborn & WordCloud** - Data visualization.
 
 ---
@@ -70,6 +71,7 @@ jupyter notebook Fake_News_Detection.ipynb
 - Top 20 N-Grams (Unigrams and Bigrams)
 - Model Confusion Matrices
 - ROC-AUC Curve Comparisons
+- Individual Models vs. Ensemble Stacking Accuracy Profiles
 
 ---
 
