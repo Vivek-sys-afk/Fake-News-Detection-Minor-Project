@@ -145,12 +145,12 @@ Understanding the societal impact of fake news and the need for automated detect
 
 | **Phase**                     | **Duration** |
 |-------------------------------|--------------|
-| Literature Review             | Week 1-2     |
-| Data Collection & Preparation | Week 3-4     |
-| EDA & Feature Engineering     | Week 5-6     |
-| Model Training & Evaluation   | Week 7-8     |
-| Model Optimization & Testing  | Week 9-10    |
-| Report Writing & Documentation| Week 11-12   |
+| Literature Review             | Week 1       |
+| Data Collection & Preparation | Week 2     |
+| EDA & Feature Engineering     | Week 4-5     |
+| Model Training & Evaluation   | Week 6-7     |
+| Model Optimization & Testing  | Week 8-9    |
+| Report Writing & Documentation| Week 10-12   |
 
 ---
 
