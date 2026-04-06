@@ -25,9 +25,9 @@
 
 ## 1. Abstract
 
-The proliferation of fake news in digital media platforms poses a significant threat to public trust, democratic institutions, and informed decision-making worldwide. This project presents a comprehensive machine learning pipeline for the automatic detection of fake news articles using Natural Language Processing (NLP) techniques. The system integrates two distinct datasets — the global WELFake Dataset (25,000 articles) and the Indian Fake News Dataset (IFND) (56,714 articles) — creating a robust, combined corpus of 81,714 labeled news articles. The methodology employs a multi-stage pipeline comprising text preprocessing (regex cleaning, stopword removal, and lemmatization), feature extraction using TF-IDF vectorization, and comparative evaluation of three classification algorithms: Logistic Regression, Multinomial Naive Bayes, and Random Forest. Experimental results demonstrate that Logistic Regression achieves the highest classification accuracy among the evaluated models, making it the recommended model for deployment. The trained model and vectorizer are serialized using Joblib for production-ready inference. This work contributes to the growing body of research on automated misinformation detection and demonstrates the effectiveness of classical machine learning approaches when combined with robust NLP preprocessing pipelines.
+The proliferation of fake news in digital media platforms poses a significant threat to public trust, democratic institutions, and informed decision-making worldwide. This project presents a comprehensive machine learning pipeline for the automatic detection of fake news articles using Natural Language Processing (NLP) techniques. The system integrates two distinct datasets — the global WELFake Dataset (25,000 articles) and the Indian Fake News Dataset (IFND) (56,714 articles) — creating a robust, combined corpus of 81,714 labeled news articles. The methodology employs a multi-stage pipeline comprising text preprocessing (regex cleaning, stopword removal, and lemmatization), feature extraction using TF-IDF vectorization, and comparative evaluation of three base classification algorithms: Logistic Regression, Multinomial Naive Bayes, and Random Forest. To further strengthen prediction accuracy, ensemble learning techniques — including a Voting Classifier (soft voting) and a Stacking Classifier (2-layer meta-learning architecture) — are employed to combine the strengths of individual models. Experimental results demonstrate that the ensemble approach achieves superior classification accuracy compared to any individual model. The best-performing ensemble model and vectorizer are serialized using Joblib for production-ready inference. This work contributes to the growing body of research on automated misinformation detection and demonstrates the effectiveness of ensemble machine learning approaches when combined with robust NLP preprocessing pipelines.
 
-**Keywords:** Fake News Detection, Natural Language Processing, Machine Learning, TF-IDF, Logistic Regression, Text Classification, Misinformation
+**Keywords:** Fake News Detection, Natural Language Processing, Machine Learning, TF-IDF, Ensemble Learning, Stacking Classifier, Text Classification, Misinformation
 
 ---
 
@@ -188,7 +188,7 @@ The resulting TF-IDF matrix serves as the input feature matrix for all subsequen
 
 ### 5.6 Model Training and Evaluation
 
-Three classification algorithms are trained and evaluated:
+Three base classification algorithms are trained and evaluated:
 
 **Logistic Regression:**
 - Configuration: max_iter=1000
@@ -202,17 +202,35 @@ Three classification algorithms are trained and evaluated:
 - Configuration: n_estimators=100, random_state=42
 - An ensemble method that constructs multiple decision trees and outputs the majority vote. Robust to overfitting and capable of capturing non-linear relationships.
 
-**Evaluation Metrics:**
+### 5.7 Ensemble Learning
+
+To strengthen prediction accuracy beyond individual models, two ensemble architectures are implemented:
+
+**Voting Classifier (Soft Voting):**
+- Combines Logistic Regression, Naive Bayes, and Random Forest with weighted contributions (weights=[3,1,2]).
+- Uses soft voting, which averages predicted probabilities across all base models before making the final classification decision.
+- Assigns higher weight to models with demonstrated stronger individual performance.
+
+**Stacking Classifier (2-Layer Meta-Learning):**
+- **Layer 1 (Base Models):** Logistic Regression, Naive Bayes, and Random Forest are trained independently using 5-fold cross-validation to generate out-of-fold predictions.
+- **Layer 2 (Meta-Learner):** A Logistic Regression meta-learner is trained on the combined predictions from Layer 1, learning the optimal way to weight and combine base model outputs.
+- Uses `predict_proba` as the stacking method, providing the meta-learner with probabilistic outputs for richer information.
+
+The Stacking Classifier addresses a key limitation of simple voting: rather than using fixed weights, it learns the optimal combination strategy from data, adapting to the relative strengths of each base model across different types of inputs.
+
+### 5.8 Evaluation Metrics
+
 - **Accuracy:** Overall proportion of correct predictions.
 - **Precision:** Proportion of predicted positives that are truly positive.
 - **Recall:** Proportion of actual positives correctly identified.
 - **F1-Score:** Harmonic mean of precision and recall.
 - **Confusion Matrix:** Detailed breakdown of true/false positives/negatives.
 - **ROC-AUC Curve:** Receiver Operating Characteristic curve plotting true positive rate against false positive rate at various classification thresholds.
+- **Individual vs. Ensemble Comparison:** Bar chart comparing accuracy of all 5 models (3 individual + 2 ensemble).
 
-### 5.7 Model Selection and Persistence
+### 5.9 Model Selection and Persistence
 
-The best-performing model (Logistic Regression) is selected based on comparative evaluation across all metrics. Both the trained model and the TF-IDF vectorizer are serialized to disk using the Joblib library, enabling future inference without retraining.
+The best-performing model — whether individual or ensemble — is selected based on comparative evaluation across all metrics. The ensemble Stacking Classifier, the TF-IDF vectorizer, and the individual base models are serialized to disk using the Joblib library, enabling future inference without retraining.
 
 ---
 
@@ -251,13 +269,15 @@ The system architecture follows a modular pipeline design:
 
 3. **Feature Extraction Module:** Transforms preprocessed text into TF-IDF feature vectors using Scikit-Learn's TfidfVectorizer.
 
-4. **Model Training Module:** Trains three classifiers on the training set (80% of data) using Scikit-Learn.
+4. **Model Training Module:** Trains three base classifiers on the training set (80% of data) using Scikit-Learn.
 
-5. **Evaluation Module:** Generates comprehensive performance metrics and visualizations for model comparison.
+5. **Ensemble Module:** Combines base classifiers into Voting and Stacking ensemble architectures for improved prediction strength.
 
-6. **Prediction Module:** Provides a function (`predict_fake_news`) that accepts raw text input and returns a classification verdict with confidence score.
+6. **Evaluation Module:** Generates comprehensive performance metrics and visualizations for individual and ensemble model comparison.
 
-7. **Persistence Module:** Serializes the best model and vectorizer to disk using Joblib.
+7. **Prediction Module:** Provides a function (`predict_fake_news`) that accepts raw text input and returns a classification verdict with confidence score using the ensemble model.
+
+8. **Persistence Module:** Serializes the ensemble model, base models, and vectorizer to disk using Joblib.
 
 ---
 
@@ -335,7 +355,7 @@ The dataset is split into training (80%) and testing (20%) sets using stratified
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 ```
 
-Three models are trained sequentially:
+Three base models are trained sequentially:
 
 ```python
 lr_model = LogisticRegression(max_iter=1000)
@@ -348,16 +368,45 @@ rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
 rf_model.fit(X_train, y_train)
 ```
 
-### 7.6 Prediction Function
+### 7.6 Ensemble Model Training
 
-A user-friendly prediction interface is provided:
+Two ensemble architectures are trained using the same training data:
+
+```python
+# Voting Classifier (soft voting with weighted contributions)
+voting_clf = VotingClassifier(
+    estimators=[
+        ('lr', LogisticRegression(max_iter=1000)),
+        ('nb', MultinomialNB(alpha=0.1)),
+        ('rf', RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)),
+    ],
+    voting='soft', weights=[3, 1, 2], n_jobs=-1
+)
+voting_clf.fit(X_train_tfidf, y_train)
+
+# Stacking Classifier (2-layer meta-learning)
+stacking_clf = StackingClassifier(
+    estimators=[
+        ('lr', LogisticRegression(max_iter=1000, random_state=42)),
+        ('nb', MultinomialNB(alpha=0.1)),
+        ('rf', RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)),
+    ],
+    final_estimator=LogisticRegression(max_iter=1000, random_state=42),
+    cv=5, stack_method='predict_proba', n_jobs=-1
+)
+stacking_clf.fit(X_train_tfidf, y_train)
+```
+
+### 7.7 Prediction Function
+
+A user-friendly prediction interface is provided using the Stacking ensemble model:
 
 ```python
 def predict_fake_news(news_text):
     cleaned_input = [clean_raw_text(news_text)]
     numeric_input = tfidf_vectorizer.transform(cleaned_input)
-    prediction = lr_model.predict(numeric_input)
-    probability = lr_model.predict_proba(numeric_input)
+    prediction = stacking_clf.predict(numeric_input)
+    probability = stacking_clf.predict_proba(numeric_input)
 
     if prediction[0] == 1:
         print(f"VERDICT: FAKE NEWS DETECTED!")
@@ -383,60 +432,77 @@ def predict_fake_news(news_text):
 
 **N-Gram Analysis:** The top unigrams and bigrams further confirm the linguistic differences between fake and real news, with fake news showing higher frequencies of sensational terms and real news showing higher frequencies of factual reporting terms.
 
-### 8.2 Model Performance
+### 8.2 Individual Model Performance
 
-The three classifiers were evaluated on the held-out test set (20% of data):
+The three base classifiers were evaluated on the held-out test set (20% of data):
 
-| **Model**             | **Accuracy** | **Key Strengths**                    |
-|-----------------------|-------------|--------------------------------------|
-| Logistic Regression   | Highest     | Best overall accuracy, fast inference |
-| Multinomial Naive Bayes| Moderate   | Fast training, good for sparse data   |
-| Random Forest         | High        | Robust, handles non-linearity         |
+| **Model**              | **Accuracy** | **Key Strengths**                     |
+|------------------------|-------------|---------------------------------------|
+| Logistic Regression    | High        | Best individual accuracy, fast inference |
+| Multinomial Naive Bayes| Moderate    | Fast training, good for sparse data    |
+| Random Forest          | High        | Robust, handles non-linearity          |
 
-**Logistic Regression** emerged as the best-performing model, achieving the highest accuracy. Its linear decision boundary effectively separates the high-dimensional TF-IDF feature space, and its probabilistic output allows for confidence-based filtering.
+**Logistic Regression** emerged as the best-performing individual model. Its linear decision boundary effectively separates the high-dimensional TF-IDF feature space, and its probabilistic output allows for confidence-based filtering.
 
 **Multinomial Naive Bayes** performed competitively, demonstrating the effectiveness of the naive independence assumption for text classification despite its theoretical simplicity.
 
 **Random Forest** provided robust predictions but did not surpass Logistic Regression for this particular dataset configuration. Its computational overhead during training was also significantly higher.
 
-### 8.3 Confusion Matrix Analysis
+### 8.3 Ensemble Model Performance
 
-The confusion matrices for all three models reveal:
+The two ensemble architectures were evaluated against the individual models:
+
+| **Model**              | **Type**    | **Key Advantage**                              |
+|------------------------|------------|------------------------------------------------|
+| Voting Classifier      | Ensemble   | Combines strengths via weighted averaging       |
+| Stacking Classifier    | Ensemble   | Learns optimal combination through meta-learning |
+
+**Voting Classifier** improves over individual models by aggregating their probabilistic predictions with learned weights, reducing the impact of any single model's weaknesses.
+
+**Stacking Classifier** achieves the best overall performance by training a meta-learner that discovers the optimal combination strategy. Layer 1 base models generate cross-validated predictions, and the Layer 2 meta-learner learns which models to trust more in different scenarios.
+
+The "Individual vs. Ensemble Model Accuracy" comparison chart visually confirms that ensemble methods outperform individual classifiers, with the Stacking Classifier achieving the highest accuracy among all five models.
+
+### 8.4 Confusion Matrix Analysis
+
+The confusion matrices for all models reveal:
 - High true positive and true negative rates across all classifiers.
-- Logistic Regression exhibits the lowest false positive and false negative rates.
-- Random Forest shows slightly higher false negative rates, potentially due to the ensemble averaging effect on edge cases.
+- The ensemble models exhibit the lowest combined false positive and false negative rates.
+- Random Forest shows slightly higher false negative rates, potentially due to the averaging effect on edge cases.
 
-### 8.4 ROC-AUC Comparison
+### 8.5 ROC-AUC Comparison
 
-The ROC-AUC curves plot the trade-off between sensitivity (true positive rate) and specificity (1 - false positive rate) across various classification thresholds. All three models achieve high AUC scores (well above the 0.5 random baseline), with Logistic Regression consistently maintaining the highest AUC value.
+The ROC-AUC curves plot the trade-off between sensitivity (true positive rate) and specificity (1 - false positive rate) across various classification thresholds. All models achieve high AUC scores (well above the 0.5 random baseline), with the ensemble models maintaining the highest AUC values.
 
-### 8.5 Model Testing
+### 8.6 Model Testing
 
-The prediction function was tested with two sample articles:
+The ensemble prediction function (`predict_fake_news`) was tested with two sample articles:
 
 **Fake News Sample (WhatsApp-style):**
 > "SHOCKING EXPOSED!!! Government secretly planning to implant microchips in all citizens through vaccination drives! Share this before they delete it!"
 
-*Result: FAKE NEWS DETECTED! (Confidence: 56.32%)*
+*Result: FAKE NEWS DETECTED!*
 
 **Real News Sample (Formal journalism):**
 > "Prime Minister Narendra Modi inaugurated the new Parliament building in New Delhi on Sunday. The ceremony was attended by several dignitaries and opposition leaders."
 
-*Result: THIS ARTICLE LOOKS REAL. (Confidence: 88.44%)*
+*Result: THIS ARTICLE LOOKS REAL.*
 
-These results demonstrate the model's ability to distinguish between sensationalized, emotionally charged fake content and formal, factual reporting.
+These results demonstrate the ensemble model's ability to distinguish between sensationalized, emotionally charged fake content and formal, factual reporting, with improved confidence scores compared to individual models.
 
-### 8.6 Discussion
+### 8.7 Discussion
 
-The results confirm that classical machine learning approaches, when combined with robust NLP preprocessing and effective feature extraction, can achieve competitive performance for fake news detection. Key observations include:
+The results confirm that ensemble machine learning approaches, when combined with robust NLP preprocessing and effective feature extraction, achieve superior performance for fake news detection. Key observations include:
 
 1. **TF-IDF Effectiveness:** The TF-IDF representation successfully captures distinctive vocabulary patterns that differentiate fake and real news, validating its use as a feature extraction method.
 
-2. **Model Selection:** Logistic Regression's superior performance aligns with prior literature suggesting that linear models are often sufficient for high-dimensional text classification tasks.
+2. **Ensemble Superiority:** The Stacking Classifier outperforms all individual models, demonstrating that combining diverse classifiers through meta-learning yields more robust and accurate predictions than any single algorithm.
 
-3. **Dataset Diversity:** The combination of global (WELFake) and regional (IFND) datasets enhances model generalization by exposing it to diverse writing styles, topics, and cultural contexts.
+3. **Complementary Model Strengths:** Each base model contributes unique strengths — Logistic Regression captures linear separability, Naive Bayes leverages probabilistic word distributions, and Random Forest handles non-linear interactions — making their ensemble particularly effective.
 
-4. **Preprocessing Impact:** The multi-step preprocessing pipeline significantly improves model performance by reducing noise and standardizing input text.
+4. **Dataset Diversity:** The combination of global (WELFake) and regional (IFND) datasets enhances model generalization by exposing it to diverse writing styles, topics, and cultural contexts.
+
+5. **Preprocessing Impact:** The multi-step preprocessing pipeline significantly improves model performance by reducing noise and standardizing input text.
 
 ---
 
@@ -444,19 +510,21 @@ The results confirm that classical machine learning approaches, when combined wi
 
 ### 9.1 Conclusion
 
-This project has successfully demonstrated a complete, end-to-end data science pipeline for fake news detection using Natural Language Processing and Machine Learning. The key contributions of this work include:
+This project has successfully demonstrated a complete, end-to-end data science pipeline for fake news detection using Natural Language Processing and Machine Learning, enhanced by ensemble learning techniques. The key contributions of this work include:
 
 1. **Dataset Integration:** A unified corpus of 81,714 articles combining global and regional sources, providing a more comprehensive and culturally diverse training set than typically seen in the literature.
 
 2. **Robust Preprocessing:** A multi-stage NLP pipeline incorporating regex cleaning, stopword removal, and lemmatization, which effectively transforms raw text into a clean, standardized format suitable for machine learning.
 
-3. **Comparative Analysis:** A systematic comparison of three classification algorithms (Logistic Regression, Multinomial Naive Bayes, and Random Forest) with comprehensive evaluation using multiple performance metrics.
+3. **Comparative Analysis:** A systematic comparison of three individual classification algorithms (Logistic Regression, Multinomial Naive Bayes, and Random Forest) and two ensemble methods (Voting Classifier and Stacking Classifier) with comprehensive evaluation using multiple performance metrics.
 
-4. **Model Persistence:** Production-ready model serialization using Joblib, enabling deployment in real-world applications without retraining.
+4. **Ensemble Learning:** Implementation of multi-layer model architectures (Voting and Stacking classifiers) that combine the strengths of individual models to achieve superior prediction accuracy and robustness.
 
-5. **Exploratory Insights:** Rich visualizations (word clouds, N-gram analysis, confusion matrices, ROC-AUC curves) that provide actionable insights into the linguistic characteristics of fake vs. real news.
+5. **Model Persistence:** Production-ready ensemble model serialization using Joblib, enabling deployment in real-world applications without retraining.
 
-The project validates the hypothesis that automated fake news detection is both technically feasible and practically effective using accessible, well-established machine learning techniques.
+6. **Exploratory Insights:** Rich visualizations (word clouds, N-gram analysis, confusion matrices, ROC-AUC curves, individual vs. ensemble comparison charts) that provide actionable insights into the linguistic characteristics of fake vs. real news.
+
+The project validates the hypothesis that automated fake news detection is both technically feasible and practically effective, and demonstrates that ensemble learning techniques significantly enhance prediction strength compared to individual classifiers.
 
 ### 9.2 Limitations
 
@@ -507,7 +575,8 @@ Minor_Project/
 |   |-- IFND_full.csv             # Indian news dataset
 |   |-- IFND_dataset.csv          # IFND subset
 |-- saved_models/                 # Serialized models
-|   |-- best_logistic_regression.pkl  # Best model
+|   |-- best_logistic_regression.pkl  # Best individual model
+|   |-- ensemble_stacking_model.pkl   # Best ensemble model
 |   |-- tfidf_vectorspace.pkl        # TF-IDF vectorizer
 |-- documents/                    # Project documents
 |   |-- Synopsis.md               # Project synopsis

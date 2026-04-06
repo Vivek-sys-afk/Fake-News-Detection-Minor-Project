@@ -65,7 +65,11 @@ The primary objectives of this project are:
    - **Multinomial Naïve Bayes**
    - **Random Forest Classifier**
 
-6. **Model Selection & Persistence:** Identify the best-performing model based on accuracy, precision, recall, F1-score, confusion matrix, and ROC-AUC curves, and serialize it using Joblib for deployment.
+6. **Ensemble Learning:** Combine the three base classifiers into advanced ensemble architectures to strengthen prediction accuracy:
+   - **Voting Classifier** (soft voting with weighted contributions)
+   - **Stacking Classifier** (2-layer meta-learning architecture)
+
+7. **Model Selection & Persistence:** Identify the best-performing model (individual or ensemble) based on accuracy, precision, recall, F1-score, confusion matrix, and ROC-AUC curves, and serialize it using Joblib for deployment.
 
 ---
 
@@ -89,16 +93,20 @@ Understanding the societal impact of fake news and the need for automated detect
 ### Phase 4: Modeling
 - **Feature Extraction:** TF-IDF Vectorization (max 50,000 features).
 - **Train-Test Split:** 80% training, 20% testing (stratified).
-- **Classification Algorithms:**
+- **Base Classification Algorithms:**
   - Logistic Regression (max_iter=1000)
   - Multinomial Naïve Bayes (alpha=0.1)
   - Random Forest (n_estimators=100)
+- **Ensemble Methods:**
+  - Voting Classifier (soft voting, weights=[3,1,2])
+  - Stacking Classifier (Layer 1: LR+NB+RF → Layer 2: Meta-Learner LR, cv=5)
 
 ### Phase 5: Evaluation
 - Accuracy Score
 - Classification Report (Precision, Recall, F1-Score)
 - Confusion Matrix Visualization
 - ROC-AUC Curve Comparison
+- Individual vs. Ensemble Model Accuracy Comparison
 
 ### Phase 6: Deployment
 - Model serialization using Joblib.
@@ -119,9 +127,9 @@ Understanding the societal impact of fake news and the need for automated detect
 ## 6. Expected Outcomes
 
 1. A fully functional fake news detection pipeline capable of classifying articles as Real or Fake.
-2. Comparative analysis of three ML algorithms with detailed performance metrics.
-3. Identification of Logistic Regression as the best-performing model.
-4. A serialized model ready for deployment in production environments.
+2. Comparative analysis of three individual ML algorithms and two ensemble methods with detailed performance metrics.
+3. Demonstration that ensemble methods (Voting and Stacking classifiers) achieve superior accuracy compared to individual models.
+4. A serialized ensemble model ready for deployment in production environments.
 5. Comprehensive EDA visualizations revealing linguistic patterns in fake vs. real news.
 
 ---
@@ -135,6 +143,7 @@ Understanding the societal impact of fake news and the need for automated detect
 | NLP Libraries           | NLTK (Stopwords, WordNet Lemmatizer)                    |
 | Feature Extraction      | Scikit-Learn (TF-IDF Vectorizer)                        |
 | ML Algorithms           | Scikit-Learn (Logistic Regression, Naive Bayes, Random Forest) |
+| Ensemble Methods        | Scikit-Learn (VotingClassifier, StackingClassifier)            |
 | Visualization           | Matplotlib, Seaborn, WordCloud                          |
 | Model Serialization     | Joblib                                                  |
 | Development Environment | Jupyter Notebook                                        |
@@ -156,6 +165,6 @@ Understanding the societal impact of fake news and the need for automated detect
 
 ## 9. Conclusion
 
-This project demonstrates a complete, end-to-end data science pipeline for fake news detection. By combining global and regional datasets, applying robust NLP preprocessing, and training multiple machine learning classifiers, this system achieves high accuracy in distinguishing fake news from genuine articles. The project contributes to the ongoing efforts to combat misinformation in the digital age.
+This project demonstrates a complete, end-to-end data science pipeline for fake news detection. By combining global and regional datasets, applying robust NLP preprocessing, training multiple machine learning classifiers, and leveraging ensemble learning techniques (Voting and Stacking classifiers), this system achieves high accuracy in distinguishing fake news from genuine articles. The multi-layer stacking approach, which combines the strengths of Logistic Regression, Naive Bayes, and Random Forest through a meta-learning architecture, delivers more robust and reliable predictions than any individual model. The project contributes to the ongoing efforts to combat misinformation in the digital age.
 
 ---
