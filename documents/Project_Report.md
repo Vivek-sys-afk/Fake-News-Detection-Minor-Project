@@ -210,8 +210,6 @@ To strengthen prediction accuracy beyond individual models, an advanced meta-lea
 - **Layer 1 (Base Models):** Calibrated PassiveAggressiveClassifier, Calibrated LinearSVC, and Logistic Regression are trained independently using 3-fold cross-validation to generate out-of-fold predictions.
 - **Layer 2 (Meta-Learner):** A Logistic Regression meta-learner is trained on the combined predictions from Layer 1, learning the optimal way to weight and combine base model outputs.
 
-The Stacking Classifier addresses a key limitation of simple voting: rather than using fixed weights, it learns the optimal combination strategy from data, adapting to the relative strengths of each base model across different types of inputs, yielding the highest end-to-end performance.
-
 ### 5.8 Evaluation Metrics
 
 - **Accuracy:** Overall proportion of correct predictions.
@@ -355,11 +353,11 @@ Three base models are trained sequentially:
 lr_model = LogisticRegression(max_iter=1000)
 lr_model.fit(X_train, y_train)
 
-nb_model = MultinomialNB(alpha=0.1)
-nb_model.fit(X_train, y_train)
+pac_model = CalibratedClassifierCV(PassiveAggressiveClassifier(max_iter=1000), cv=3)
+pac_model.fit(X_train, y_train)
 
-rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
-rf_model.fit(X_train, y_train)
+svc_model = CalibratedClassifierCV(LinearSVC(dual=False), cv=3)
+svc_model.fit(X_train, y_train)
 ```
 
 ### 7.6 Ensemble Model Training
@@ -381,12 +379,12 @@ voting_clf.fit(X_train_tfidf, y_train)
 # Stacking Classifier (2-layer meta-learning)
 stacking_clf = StackingClassifier(
     estimators=[
-        ('lr', LogisticRegression(max_iter=1000, random_state=42)),
-        ('nb', MultinomialNB(alpha=0.1)),
-        ('rf', RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)),
+        ('pac', CalibratedClassifierCV(PassiveAggressiveClassifier(max_iter=1000))),
+        ('svc', CalibratedClassifierCV(LinearSVC(dual=False))),
+        ('lr', LogisticRegression(max_iter=1000)),
     ],
-    final_estimator=LogisticRegression(max_iter=1000, random_state=42),
-    cv=5, stack_method='predict_proba', n_jobs=-1
+    final_estimator=LogisticRegression(max_iter=1000),
+    cv=3, stack_method='predict_proba', n_jobs=-1
 )
 stacking_clf.fit(X_train_tfidf, y_train)
 ```
@@ -448,14 +446,14 @@ The three base classifiers were evaluated on the held-out test set (20% of data)
 | **Model**              | **Accuracy** | **Key Strengths**                     |
 |------------------------|-------------|---------------------------------------|
 | Logistic Regression    | High        | Best individual accuracy, fast inference |
-| Multinomial Naive Bayes| Moderate    | Fast training, good for sparse data    |
-| Random Forest          | High        | Robust, handles non-linearity          |
+| PassiveAggressive      | High        | Handles large text data efficiently    |
+| LinearSVC              | High        | Best for high-dimensional TF-IDF features |
 
 **Logistic Regression** emerged as the best-performing individual model. Its linear decision boundary effectively separates the high-dimensional TF-IDF feature space, and its probabilistic output allows for confidence-based filtering.
 
-**Multinomial Naive Bayes** performed competitively, demonstrating the effectiveness of the naive independence assumption for text classification despite its theoretical simplicity.
+**PassiveAggressiveClassifier** performed exceptionally well on the mixed dataset, proving its ability to handle large-scale document updates and noisy data without losing classification accuracy.
 
-**Random Forest** provided robust predictions but did not surpass Logistic Regression for this particular dataset configuration. Its computational overhead during training was also significantly higher.
+**LinearSVC** achieved high precision by finding the optimal hyperplane in the high-dimensional TF-IDF space, making it a crucial component in both individual and ensemble results.
 
 ### 8.3 Ensemble Model Performance
 
@@ -466,7 +464,7 @@ The two ensemble architectures were evaluated against the individual models:
 | Voting Classifier      | Ensemble   | Combines strengths via weighted averaging       |
 | Stacking Classifier    | Ensemble   | Learns optimal combination through meta-learning |
 
-**Voting Classifier** improves over individual models by aggregating their probabilistic predictions with learned weights, reducing the impact of any single model's weaknesses.
+**The Stacking Classifier** improves over individual models by aggregating their probabilistic predictions with learned weights, reducing the impact of any single model's weaknesses.
 
 **Stacking Classifier** achieves the best overall performance by training a meta-learner that discovers the optimal combination strategy. Layer 1 base models generate cross-validated predictions, and the Layer 2 meta-learner learns which models to trust more in different scenarios.
 
@@ -507,7 +505,7 @@ The results confirm that ensemble machine learning approaches, when combined wit
 
 2. **Ensemble Superiority:** The Stacking Classifier outperforms all individual models, demonstrating that combining diverse classifiers through meta-learning yields more robust and accurate predictions than any single algorithm.
 
-3. **Complementary Model Strengths:** Each base model contributes unique strengths — Logistic Regression captures linear separability, Naive Bayes leverages probabilistic word distributions, and Random Forest handles non-linear interactions — making their ensemble particularly effective.
+3. **Complementary Model Strengths:** Each base model contributes unique strengths — Logistic Regression captures linear separability, PassiveAggressive handles semantic noise, and LinearSVC optimizes the classification margin — making their ensemble particularly effective.
 
 4. **Dataset Diversity:** The combination of global (WELFake) and regional (IFND) datasets enhances model generalization by exposing it to diverse writing styles, topics, and cultural contexts.
 
