@@ -15,8 +15,8 @@ The workflow is broken into 8 main sections:
 2. **Data Loading:** Safely loading local datasets (incorporating Global WELFake and Regional IFND datasets).
 3. **Text Preprocessing:** Cleaning raw text data (Regex manipulation, Stopword Removal, and Lemmatization).
 4. **Exploratory Data Analysis (EDA) & Visualization:** Graphing word counts, Class Distributions, Word Clouds, and N-gram frequencies.
-5. **Feature Engineering:** Converting clean text into mathematical features using TF-IDF Vectorized representations.
-6. **Model Training & Evaluation:** Training base ML models (Logistic Regression, Naive Bayes, Random Forest) and advanced Ensemble models (Voting and Stacking classifiers), followed by visualizing comparative ROC-AUC curves and accuracies.
+5. **Feature Engineering:** Converting clean text into mathematical features using a `FeatureUnion` of Word and Character TF-IDF Vectorized representations.
+6. **Model Training & Evaluation:** Training base ML models (PassiveAggressiveClassifier, LinearSVC, Logistic Regression) and an advanced `StackingClassifier` meta-model, followed by visualizing comparative ROC-AUC curves and accuracies.
 7. **Model Persistence:** Serializing the best performing ensemble model and vectorizer using `joblib` for future production.
 8. **Model Testing:** A practical inference function for testing the saved ensemble model on real-world news samples with confidence-based heuristics.
 
@@ -60,7 +60,7 @@ jupyter notebook Fake_News_Detection.ipynb
 - **Python** - The core programming language.
 - **Pandas & NumPy** - Data manipulation and analysis.
 - **NLTK (Natural Language Toolkit)** - Text preprocessing and NLP.
-- **Scikit-Learn** - Machine Learning algorithms, Feature Extraction, and Ensemble architectures (Voting & Stacking).
+- **Scikit-Learn** - Machine Learning algorithms, Feature Extraction (`FeatureUnion`, `TfidfVectorizer`), and Ensemble architectures (`StackingClassifier`, Probability Calibration).
 - **Matplotlib, Seaborn & WordCloud** - Data visualization.
 
 ---

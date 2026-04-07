@@ -58,16 +58,14 @@ The primary objectives of this project are:
    - Word Cloud generation for Fake and Real news corpora
    - N-gram frequency analysis (Unigrams and Bigrams)
 
-4. **Feature Engineering:** Transform clean text data into numerical feature vectors using **TF-IDF (Term Frequency–Inverse Document Frequency)** vectorization with a maximum of 50,000 features.
+4. **Feature Engineering:** Transform clean text data into numerical feature vectors using a `FeatureUnion` of **Word** (max 8,000, n-grams 1,2) and **Character** (max 4,000, n-grams 3-5) **TF-IDF (Term Frequency–Inverse Document Frequency)** vectorization.
 
 5. **Model Training & Evaluation:** Train and comparatively evaluate three machine learning classifiers:
+   - **Calibrated PassiveAggressiveClassifier**
+   - **Calibrated LinearSVC**
    - **Logistic Regression**
-   - **Multinomial Naïve Bayes**
-   - **Random Forest Classifier**
 
-6. **Ensemble Learning:** Combine the three base classifiers into advanced ensemble architectures to strengthen prediction accuracy:
-   - **Voting Classifier** (soft voting with weighted contributions)
-   - **Stacking Classifier** (2-layer meta-learning architecture)
+6. **Ensemble Learning:** Combine the base classifiers into an advanced **Stacking Classifier** architecture (2-layer meta-learning) to strengthen prediction accuracy, using a Logistic Regression meta-learner.
 
 7. **Model Selection & Persistence:** Identify the best-performing model (individual or ensemble) based on accuracy, precision, recall, F1-score, confusion matrix, and ROC-AUC curves, and serialize it using Joblib for deployment.
 
@@ -91,15 +89,14 @@ Understanding the societal impact of fake news and the need for automated detect
 - Filtering empty or corrupt records.
 
 ### Phase 4: Modeling
-- **Feature Extraction:** TF-IDF Vectorization (max 50,000 features).
+- **Feature Extraction:** FeatureUnion of Word and Character TF-IDF (approx. 12,000 combined features).
 - **Train-Test Split:** 80% training, 20% testing (stratified).
 - **Base Classification Algorithms:**
+  - Calibrated PassiveAggressiveClassifier
+  - Calibrated LinearSVC
   - Logistic Regression (max_iter=1000)
-  - Multinomial Naïve Bayes (alpha=0.1)
-  - Random Forest (n_estimators=100)
 - **Ensemble Methods:**
-  - Voting Classifier (soft voting, weights=[3,1,2])
-  - Stacking Classifier (Layer 1: LR+NB+RF → Layer 2: Meta-Learner LR, cv=5)
+  - Stacking Classifier (Layer 1: PAC+SVC+LR → Layer 2: Meta-Learner LR, cv=3)
 
 ### Phase 5: Evaluation
 - Accuracy Score

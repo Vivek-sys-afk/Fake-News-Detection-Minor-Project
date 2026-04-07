@@ -25,7 +25,7 @@
 
 ## 1. Abstract
 
-The proliferation of fake news in digital media platforms poses a significant threat to public trust, democratic institutions, and informed decision-making worldwide. This project presents a comprehensive machine learning pipeline for the automatic detection of fake news articles using Natural Language Processing (NLP) techniques. The system integrates two distinct datasets — the global WELFake Dataset (25,000 articles) and the Indian Fake News Dataset (IFND) (56,714 articles) — creating a robust, combined corpus of 81,714 labeled news articles. The methodology employs a multi-stage pipeline comprising text preprocessing (regex cleaning, stopword removal, and lemmatization), feature extraction using TF-IDF vectorization, and comparative evaluation of three base classification algorithms: Logistic Regression, Multinomial Naive Bayes, and Random Forest. To further strengthen prediction accuracy, ensemble learning techniques — including a Voting Classifier (soft voting) and a Stacking Classifier (2-layer meta-learning architecture) — are employed to combine the strengths of individual models. Experimental results demonstrate that the ensemble approach achieves superior classification accuracy compared to any individual model. The best-performing ensemble model and vectorizer are serialized using Joblib for production-ready inference. This work contributes to the growing body of research on automated misinformation detection and demonstrates the effectiveness of ensemble machine learning approaches when combined with robust NLP preprocessing pipelines.
+The proliferation of fake news in digital media platforms poses a significant threat to public trust, democratic institutions, and informed decision-making worldwide. This project presents a comprehensive machine learning pipeline for the automatic detection of fake news articles using Natural Language Processing (NLP) techniques. The system integrates two distinct datasets — the global WELFake Dataset (25,000 articles) and the Indian Fake News Dataset (IFND) (56,714 articles) — creating a robust, combined corpus of 81,714 labeled news articles. The methodology employs a multi-stage pipeline comprising text preprocessing (regex cleaning, stopword removal, and lemmatization), feature extraction using a `FeatureUnion` of word and character-level TF-IDF vectorization, and comparative evaluation of three base classification algorithms: PassiveAggressiveClassifier, LinearSVC, and Logistic Regression. To further strengthen prediction accuracy, ensemble learning techniques — specifically a Stacking Classifier (2-layer meta-learning architecture) — is employed to combine the strengths of individual models. Experimental results demonstrate that the ensemble approach achieves superior classification accuracy compared to any individual model. The best-performing ensemble model and vectorizer are serialized using Joblib for production-ready inference. This work contributes to the growing body of research on automated misinformation detection and demonstrates the effectiveness of ensemble machine learning approaches when combined with robust NLP preprocessing pipelines.
 
 **Keywords:** Fake News Detection, Natural Language Processing, Machine Learning, TF-IDF, Ensemble Learning, Stacking Classifier, Text Classification, Misinformation
 
@@ -178,45 +178,39 @@ Comprehensive EDA is conducted to understand the dataset characteristics:
 
 ### 5.5 Feature Engineering
 
-Text data is transformed into numerical feature vectors using TF-IDF (Term Frequency-Inverse Document Frequency) vectorization:
+Text data is transformed into numerical feature vectors using a `FeatureUnion` of word and character-level TF-IDF (Term Frequency-Inverse Document Frequency) vectorization:
 
-- **Maximum Features:** 50,000 (to capture a rich vocabulary while managing dimensionality).
-- **Sublinear TF:** Enabled (applies logarithmic scaling to term frequencies).
-- **Stop Words:** English stop words are excluded at the vectorizer level as an additional safeguard.
+- **Word Vectorizer:** Configured with max_features=8000 and ngram_range=(1,2) to capture semantic meanings and phrasal patterns.
+- **Character Vectorizer:** Configured with max_features=4000, ngram_range=(3,5), and analyzer='char_wb' to capture morphological variations, out-of-vocabulary words and sensational character-level cues.
+- **Stop Words:** English stop words are excluded at the text preprocessing level to ensure clean tokens before vectorization.
 
-The resulting TF-IDF matrix serves as the input feature matrix for all subsequent classifiers.
+The combined resulting TF-IDF matrix serves as the input enhanced feature matrix for all subsequent classifiers.
 
 ### 5.6 Model Training and Evaluation
 
 Three base classification algorithms are trained and evaluated:
 
+**PassiveAggressiveClassifier:**
+- Configuration: max_iter=1000, C=0.5
+- An online learning algorithm that remains passive for a correct classification and aggressive in the event of a miscalculation. Incredibly powerful for large text corpora but aggressive in probabilities, thus wrapped in a `CalibratedClassifierCV` to obtain smooth prediction percentages.
+
+**LinearSVC (Support Vector Machine):**
+- Configuration: max_iter=2000, dual=False
+- Attempts to discover the ideal hyperplane that distinguishes the fake and real classes with the maximum margin. Highly effective in high dimensional TF-IDF spaces. Also wrapped in a `CalibratedClassifierCV`.
+
 **Logistic Regression:**
-- Configuration: max_iter=1000
-- A linear classifier that models the probability of class membership using the logistic (sigmoid) function. Well-suited for high-dimensional text classification tasks.
-
-**Multinomial Naive Bayes:**
-- Configuration: alpha=0.1 (Laplace smoothing)
-- A probabilistic classifier based on Bayes' theorem with the assumption of feature independence. Particularly effective for text classification due to its simplicity and efficiency.
-
-**Random Forest:**
-- Configuration: n_estimators=100, random_state=42
-- An ensemble method that constructs multiple decision trees and outputs the majority vote. Robust to overfitting and capable of capturing non-linear relationships.
+- Configuration: max_iter=1000, n_jobs=-1
+- A linear classifier that models the probability of class membership using the logistic (sigmoid) function. Extremely fast and well-suited for a strong baseline in text classification tasks.
 
 ### 5.7 Ensemble Learning
 
-To strengthen prediction accuracy beyond individual models, two ensemble architectures are implemented:
-
-**Voting Classifier (Soft Voting):**
-- Combines Logistic Regression, Naive Bayes, and Random Forest with weighted contributions (weights=[3,1,2]).
-- Uses soft voting, which averages predicted probabilities across all base models before making the final classification decision.
-- Assigns higher weight to models with demonstrated stronger individual performance.
+To strengthen prediction accuracy beyond individual models, an advanced meta-learning architecture is implemented:
 
 **Stacking Classifier (2-Layer Meta-Learning):**
-- **Layer 1 (Base Models):** Logistic Regression, Naive Bayes, and Random Forest are trained independently using 5-fold cross-validation to generate out-of-fold predictions.
+- **Layer 1 (Base Models):** Calibrated PassiveAggressiveClassifier, Calibrated LinearSVC, and Logistic Regression are trained independently using 3-fold cross-validation to generate out-of-fold predictions.
 - **Layer 2 (Meta-Learner):** A Logistic Regression meta-learner is trained on the combined predictions from Layer 1, learning the optimal way to weight and combine base model outputs.
-- Uses `predict_proba` as the stacking method, providing the meta-learner with probabilistic outputs for richer information.
 
-The Stacking Classifier addresses a key limitation of simple voting: rather than using fixed weights, it learns the optimal combination strategy from data, adapting to the relative strengths of each base model across different types of inputs.
+The Stacking Classifier addresses a key limitation of simple voting: rather than using fixed weights, it learns the optimal combination strategy from data, adapting to the relative strengths of each base model across different types of inputs, yielding the highest end-to-end performance.
 
 ### 5.8 Evaluation Metrics
 
