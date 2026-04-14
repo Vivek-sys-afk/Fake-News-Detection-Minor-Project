@@ -105,13 +105,12 @@ Feature extraction is a critical stage in any text classification pipeline. Comm
 
 **Word Embeddings:** Dense vector representations (e.g., Word2Vec, GloVe) that capture semantic relationships between words. While more expressive than TF-IDF, they may not always outperform simpler methods for classification tasks.
 
-### 3.5 Datasets for Fake News Research
+### 3.5 Datasets Utilized in this Project
 
-Several benchmark datasets have been developed for fake news detection research:
+This project primarily utilizes two high-quality datasets to ensure both global coverage and regional specificity:
 
-- **LIAR Dataset (Wang, 2017):** Contains 12,800 short statements labeled with six fine-grained truthfulness categories.
-- **WELFake Dataset (Verma et al., 2021):** Contains 72,134 articles sourced from four popular news datasets (Kaggle, McIntire, Reuters, BuzzFeed Political), with binary labels.
-- **IFND Dataset (Patil & Dhage, 2019):** Contains Indian news articles labeled as Real or Fake, addressing the underrepresentation of non-Western news sources in fake news research.
+- **WELFake Dataset (Verma et al., 2021):** This globally-sourced dataset contains 72,134 articles merged from four popular news sources: Kaggle, McIntire, Reuters, and BuzzFeed Political. It provides binary classification labels (Real/Fake). Following advanced sampling techniques, a stratified sample of 25,000 articles was used for this study to optimize computational resources while maintaining linguistic variety.
+- **IFND Dataset (Patil & Dhage, 2019):** The Indian Fake News Dataset (IFND) provides 56,714 news articles categorized as Real or Fake. This dataset addresses the underrepresentation of non-Western news in misinformation research and allows the model to learn linguistic patterns and regional context specific to the Indian news landscape.
 
 ### 3.6 Research Gap
 
