@@ -32,6 +32,7 @@ The manual verification of news articles is an impractical approach given the sh
 The rapid spread of misinformation through digital platforms has become a global concern. Traditional fact-checking mechanisms are slow, subjective, and unable to scale to the magnitude of online content. There is a critical need for automated, scalable, and accurate systems that can detect fake news in real-time.
 
 **This project aims to develop a robust fake news detection pipeline that:**
+
 1. Ingests and preprocesses large-scale news datasets from multiple sources.
 2. Applies advanced NLP techniques for text cleaning and feature extraction.
 3. Trains and evaluates multiple machine learning classifiers.
@@ -76,19 +77,23 @@ The primary objectives of this project are:
 The project follows the **CRISP-DM (Cross-Industry Standard Process for Data Mining)** methodology:
 
 ### Phase 1: Business Understanding
+
 Understanding the societal impact of fake news and the need for automated detection systems.
 
 ### Phase 2: Data Understanding
+
 - Loading the **WELFake Dataset** containing globally sourced labeled news articles.
 - Loading the **IFND Dataset** containing regionally (India) sourced labeled news articles.
 - Combining both datasets into a master dataset of 81,714 articles.
 
 ### Phase 3: Data Preparation
+
 - Text cleaning using Regex, stopword removal, and lemmatization.
 - Label standardization (binary: 0 = Real, 1 = Fake).
 - Filtering empty or corrupt records.
 
 ### Phase 4: Modeling
+
 - **Feature Extraction:** FeatureUnion of Word and Character TF-IDF (approx. 12,000 combined features).
 - **Train-Test Split:** 80% training, 20% testing (stratified).
 - **Base Classification Algorithms:**
@@ -99,6 +104,7 @@ Understanding the societal impact of fake news and the need for automated detect
   - Stacking Classifier (Layer 1: PAC+SVC+LR → Layer 2: Meta-Learner LR, cv=3)
 
 ### Phase 5: Evaluation
+
 - Accuracy Score
 - Classification Report (Precision, Recall, F1-Score)
 - Confusion Matrix Visualization
@@ -106,6 +112,7 @@ Understanding the societal impact of fake news and the need for automated detect
 - Individual vs. Ensemble Model Accuracy Comparison
 
 ### Phase 6: Deployment
+
 - Model serialization using Joblib.
 - Interactive prediction function for real-time classification.
 
@@ -139,8 +146,8 @@ Understanding the societal impact of fake news and the need for automated detect
 | Data Manipulation       | Pandas, NumPy                                           |
 | NLP Libraries           | NLTK (Stopwords, WordNet Lemmatizer)                    |
 | Feature Extraction      | Scikit-Learn (TF-IDF Vectorizer)                        |
-| ML Algorithms           | Scikit-Learn (Logistic Regression, Naive Bayes, Random Forest) |
-| Ensemble Methods        | Scikit-Learn (VotingClassifier, StackingClassifier)            |
+| **ML Algorithms**           | Scikit-Learn (Logistic Regression, Passive Aggressive, Linear SVC) |
+| **Ensemble Methods**        | Scikit-Learn (StackingClassifier)            |
 | Visualization           | Matplotlib, Seaborn, WordCloud                          |
 | Model Serialization     | Joblib                                                  |
 | Development Environment | Jupyter Notebook                                        |
@@ -162,6 +169,6 @@ Understanding the societal impact of fake news and the need for automated detect
 
 ## 9. Conclusion
 
-This project demonstrates a complete, end-to-end data science pipeline for fake news detection. By combining global and regional datasets, applying robust NLP preprocessing, training multiple machine learning classifiers, and leveraging ensemble learning techniques (Voting and Stacking classifiers), this system achieves high accuracy in distinguishing fake news from genuine articles. The multi-layer stacking approach, which combines the strengths of Logistic Regression, Naive Bayes, and Random Forest through a meta-learning architecture, delivers more robust and reliable predictions than any individual model. The project contributes to the ongoing efforts to combat misinformation in the digital age.
+This project demonstrates a complete, end-to-end data science pipeline for fake news detection. By combining global and regional datasets, applying robust NLP preprocessing, training multiple machine learning classifiers, and leveraging ensemble learning techniques (Stacking classifier), this system achieves high accuracy in distinguishing fake news from genuine articles. The multi-layer stacking approach, which combines the strengths of Logistic Regression, Passive Aggressive, and Linear SVC through a meta-learning architecture, delivers more robust and reliable predictions than any individual model. The project contributes to the ongoing efforts to combat misinformation in the digital age.
 
 ---

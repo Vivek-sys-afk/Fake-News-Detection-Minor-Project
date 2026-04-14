@@ -53,6 +53,7 @@ The motivation for this project stems from several critical observations:
 ### 2.3 Scope of the Project
 
 This project focuses on building a binary classification system that categorizes news articles as either **Real (0)** or **Fake (1)**. The scope encompasses:
+
 - Data ingestion from multiple, heterogeneous sources.
 - Text preprocessing and feature extraction.
 - Training, evaluation, and comparison of multiple ML models.
@@ -67,6 +68,7 @@ The system is designed as a proof-of-concept that demonstrates the viability of 
 ### 3.1 Definition and Taxonomy of Fake News
 
 The term "fake news" encompasses a broad spectrum of misleading content. Wardle and Derakhshan (2017) proposed an influential taxonomy that classifies information disorder into three categories:
+
 - **Misinformation:** False information shared without intent to deceive.
 - **Disinformation:** False information deliberately created and shared to cause harm.
 - **Malinformation:** Genuine information shared to cause harm (e.g., leaks, harassment).
@@ -76,6 +78,7 @@ In the context of this project, "fake news" refers primarily to disinformation �
 ### 3.2 Traditional Approaches to Fake News Detection
 
 Early approaches to fake news detection relied heavily on manual fact-checking and expert verification. Organizations such as Snopes, PolitiFact, and FactCheck.org employed teams of journalists and researchers to investigate claims and publish verdicts. While these approaches provide high-quality assessments, they suffer from:
+
 - **Latency:** Manual verification often takes hours or days, by which time the fake news may have already achieved widespread reach.
 - **Scalability:** Human reviewers can only process a limited number of articles.
 - **Subjectivity:** The assessment of "truth" can vary among experts, particularly for nuanced claims.
@@ -121,6 +124,7 @@ While significant progress has been made, most existing studies focus on either 
 ### 4.1 Formal Problem Statement
 
 Given a corpus of news articles $D = \{d_1, d_2, ..., d_n\}$, where each article $d_i$ consists of textual content, the objective is to learn a classification function $f: D \rightarrow \{0, 1\}$ that maps each article to one of two classes:
+
 - **Class 0 (Real):** The article is genuine, factual reporting.
 - **Class 1 (Fake):** The article is fabricated, misleading, or deliberately deceptive.
 
@@ -184,21 +188,24 @@ Text data is transformed into numerical feature vectors using a `FeatureUnion` o
 - **Character Vectorizer:** Configured with max_features=4000, ngram_range=(3,5), and analyzer='char_wb' to capture morphological variations, out-of-vocabulary words and sensational character-level cues.
 - **Stop Words:** English stop words are excluded at the text preprocessing level to ensure clean tokens before vectorization.
 
-The combined resulting TF-IDF matrix serves as the input enhanced feature matrix for all subsequent classifiers.
+The combined resulting TF-IDF matrix serves as the input enhanced feature matrix (approx. 12,000 features) for all subsequent classifiers.
 
 ### 5.6 Model Training and Evaluation
 
 Three base classification algorithms are trained and evaluated:
 
 **PassiveAggressiveClassifier:**
+
 - Configuration: max_iter=1000, C=0.5
 - An online learning algorithm that remains passive for a correct classification and aggressive in the event of a miscalculation. Incredibly powerful for large text corpora but aggressive in probabilities, thus wrapped in a `CalibratedClassifierCV` to obtain smooth prediction percentages.
 
 **LinearSVC (Support Vector Machine):**
+
 - Configuration: max_iter=2000, dual=False
 - Attempts to discover the ideal hyperplane that distinguishes the fake and real classes with the maximum margin. Highly effective in high dimensional TF-IDF spaces. Also wrapped in a `CalibratedClassifierCV`.
 
 **Logistic Regression:**
+
 - Configuration: max_iter=1000, n_jobs=-1
 - A linear classifier that models the probability of class membership using the logistic (sigmoid) function. Extremely fast and well-suited for a strong baseline in text classification tasks.
 
@@ -207,6 +214,7 @@ Three base classification algorithms are trained and evaluated:
 To strengthen prediction accuracy beyond individual models, an advanced meta-learning architecture is implemented:
 
 **Stacking Classifier (2-Layer Meta-Learning):**
+
 - **Layer 1 (Base Models):** Calibrated PassiveAggressiveClassifier, Calibrated LinearSVC, and Logistic Regression are trained independently using 3-fold cross-validation to generate out-of-fold predictions.
 - **Layer 2 (Meta-Learner):** A Logistic Regression meta-learner is trained on the combined predictions from Layer 1, learning the optimal way to weight and combine base model outputs.
 
@@ -332,12 +340,20 @@ This function is applied using Pandas' `apply` method, with execution time appro
 TF-IDF vectorization is configured as follows:
 
 ```python
-tfidf_vectorizer = TfidfVectorizer(max_features=50000, sublinear_tf=True, stop_words='english')
-X = tfidf_vectorizer.fit_transform(df['clean_text'])
-y = df['label']
+# Create the combined vectorizer space
+word_vectorizer = TfidfVectorizer(max_features=8000, ngram_range=(1,2))
+char_vectorizer = TfidfVectorizer(max_features=4000, ngram_range=(3,5), analyzer='char_wb')
+
+tfidf_vectorizer = FeatureUnion([
+    ('word', word_vectorizer),
+    ('char', char_vectorizer)
+])
+
+X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
+X_test_tfidf = tfidf_vectorizer.transform(X_test)
 ```
 
-The resulting sparse matrix X has dimensions (81,714 x 50,000), representing each article as a 50,000-dimensional TF-IDF vector.
+The resulting sparse matrix has approx. 12,000 dimensions, representing each article through both word semantics and character morphology.
 
 ### 7.5 Model Training
 
@@ -398,27 +414,24 @@ def predict_fake_news(news_text):
     cleaned_input = [clean_raw_text(news_text)]
     numeric_input = tfidf_vectorizer.transform(cleaned_input)
     
-    prediction = stacking_clf.predict(numeric_input)
-    probability = stacking_clf.predict_proba(numeric_input)
-    confidence = max(probability[0]) * 100
+    prediction = stacking_clf.predict(numeric_input)[0]
+    probability = stacking_clf.predict_proba(numeric_input)[0]
+    confidence = max(probability) * 100
     
     print("\n" + "="*50)
     print("     ENSEMBLE FAKE NEWS DETECTION RESULT")
     print("="*50)
     
-    if prediction[0] == 1 and confidence >= 75:
-        print(f"VERDICT:  FAKE NEWS DETECTED!")
-    elif prediction[0] == 1 and confidence >= 55:
-        print(f"VERDICT:  THIS ARTICLE MAY BE FAKE")
-    elif prediction[0] == 1:
-        print(f"VERDICT:  POSSIBLY FAKE — NOT ENOUGH EVIDENCE")
-    elif prediction[0] == 0 and confidence >= 75:
-        print(f"VERDICT:  THIS ARTICLE LOOKS REAL")
-    elif prediction[0] == 0 and confidence >= 55:
-        print(f"VERDICT:  THIS ARTICLE MAY BE REAL")
+    if prediction == 1:
+        if confidence > 90: verdict = "FAKE NEWS DETECTED"
+        elif confidence > 75: verdict = "SUSPICIOUS"
+        else: verdict = "POTENTIALLY FAKE"
     else:
-        print(f"VERDICT:  UNCERTAIN — COULD BE EITHER")
+        if confidence > 90: verdict = "REAL"
+        elif confidence > 75: verdict = "PROBABLY REAL"
+        else: verdict = "INCONCLUSIVE"
     
+    print(f"VERDICT: {verdict}")
     print(f"Confidence: {confidence:.2f}%")
     print("="*50 + "\n")
 ```
@@ -434,6 +447,7 @@ def predict_fake_news(news_text):
 **Word Count Analysis:** Fake news articles tend to exhibit a wider range of word counts compared to real articles. Real news articles show a more concentrated distribution around typical journalistic article lengths, while fake news articles display greater variability — some being extremely short (typical of clickbait headlines) and others disproportionately long.
 
 **Word Cloud Insights:** The word clouds reveal distinct thematic and vocabulary differences between the two classes:
+
 - **Fake News:** Dominated by politically charged and sensational terms, with an emphasis on emotional language designed to provoke strong reactions.
 - **Real News:** Characterized by more neutral, informative vocabulary typical of professional journalism.
 
@@ -445,11 +459,11 @@ The three base classifiers were evaluated on the held-out test set (20% of data)
 
 | **Model**              | **Accuracy** | **Key Strengths**                     |
 |------------------------|-------------|---------------------------------------|
-| Logistic Regression    | High        | Best individual accuracy, fast inference |
-| PassiveAggressive      | High        | Handles large text data efficiently    |
-| LinearSVC              | High        | Best for high-dimensional TF-IDF features |
+| Logistic Regression    | 92.51%      | Fast inference, excellent baseline     |
+| PassiveAggressive      | 92.42%      | Robust for large scale updates          |
+| LinearSVC              | 93.05%      | Best individual accuracy in high-dim space |
 
-**Logistic Regression** emerged as the best-performing individual model. Its linear decision boundary effectively separates the high-dimensional TF-IDF feature space, and its probabilistic output allows for confidence-based filtering.
+**LinearSVC** emerged as the best-performing individual model in this specific vector space. Its geometric decision boundary effectively separates the 12,000-dimensional TF-IDF feature space.
 
 **PassiveAggressiveClassifier** performed exceptionally well on the mixed dataset, proving its ability to handle large-scale document updates and noisy data without losing classification accuracy.
 
@@ -473,9 +487,9 @@ The "Individual vs. Ensemble Model Accuracy" comparison chart visually confirms 
 ### 8.4 Confusion Matrix Analysis
 
 The confusion matrices for all models reveal:
+
 - High true positive and true negative rates across all classifiers.
 - The ensemble models exhibit the lowest combined false positive and false negative rates.
-- Random Forest shows slightly higher false negative rates, potentially due to the averaging effect on edge cases.
 
 ### 8.5 ROC-AUC Comparison
 
@@ -523,9 +537,9 @@ This project has successfully demonstrated a complete, end-to-end data science p
 
 2. **Robust Preprocessing:** A multi-stage NLP pipeline incorporating regex cleaning, stopword removal, and lemmatization, which effectively transforms raw text into a clean, standardized format suitable for machine learning.
 
-3. **Comparative Analysis:** A systematic comparison of three individual classification algorithms (Logistic Regression, Multinomial Naive Bayes, and Random Forest) and two ensemble methods (Voting Classifier and Stacking Classifier) with comprehensive evaluation using multiple performance metrics.
+3. **Comparative Analysis:** A systematic comparison of three individual classification algorithms (Logistic Regression, Passive Aggressive, and Linear SVC) and an ensemble method (Stacking Classifier) with comprehensive evaluation using multiple performance metrics.
 
-4. **Ensemble Learning:** Implementation of multi-layer model architectures (Voting and Stacking classifiers) that combine the strengths of individual models to achieve superior prediction accuracy and robustness.
+4. **Ensemble Learning:** Implementation of a multi-layer Stacking architecture that combines the strengths of individual models to achieve superior prediction accuracy and robustness.
 
 5. **Model Persistence:** Production-ready ensemble model serialization using Joblib, enabling deployment in real-world applications without retraining.
 
@@ -581,9 +595,9 @@ Minor_Project/
 |   |-- WELFake_Dataset.csv       # Global news dataset
 |   |-- IFND_full.csv             # Indian news dataset
 |-- saved_models/                 # Serialized models
-|   |-- best_logistic_regression.pkl  # Best individual model
+|   |-- best_logistic_regression.pkl  # Baseline model
 |   |-- ensemble_stacking_model.pkl   # Best ensemble model
-|   |-- tfidf_vectorspace.pkl        # TF-IDF vectorizer
+|   |-- tfidf_vectorizer.pkl         # TF-IDF vectorizer
 |-- documents/                    # Project documents
 |   |-- Synopsis.md               # Project synopsis
 |   |-- Project_Report.md         # Project report
