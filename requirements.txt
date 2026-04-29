@@ -1,5 +1,4 @@
 # Project packages
-# test comment
 pandas
 numpy
 matplotlib
@@ -9,7 +8,11 @@ nltk
 jupyter
 notebook
 wordcloud
+joblib
+tqdm
+
 # Transformer / Deep Learning packages
 torch
 transformers
 accelerate
+evaluate

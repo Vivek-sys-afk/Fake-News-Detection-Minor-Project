@@ -8,27 +8,22 @@ Welcome to the **Fake News Detection** pipeline repository! This project represe
 
 ## Project Overview
 
-This repository contains a comprehensive Jupyter Notebook that covers the end-to-end data science lifecycle. The goal of this project is to classify news articles as **Real** or **Fake** using Natural Language Processing and Machine Learning classification algorithms.
+This repository contains a comprehensive dual-model data science pipeline. The goal of this project is to classify news articles as **Real** or **Fake** using both traditional Machine Learning and state-of-the-art Deep Learning (Transformers).
 
-The workflow is broken into 8 main sections:
-
-1. **Library Imports & Setup:** Installing and configuring required tools.
-2. **Data Loading:** Safely loading local datasets (incorporating Global WELFake and Regional IFND datasets).
-3. **Text Preprocessing:** Cleaning raw text data (Regex manipulation, Stopword Removal, and Lemmatization).
-4. **Exploratory Data Analysis (EDA) & Visualization:** Graphing word counts, Class Distributions, Word Clouds, and N-gram frequencies.
-5. **Feature Engineering:** Converting clean text into mathematical features using a `FeatureUnion` of Word and Character TF-IDF representations (approx. 12,000 features).
-6. **Model Training & Evaluation:** Training base ML models (PassiveAggressiveClassifier, LinearSVC, Logistic Regression) and an advanced `StackingClassifier` meta-model, followed by visualizing comparative confusion matrices and accuracies.
-7. **Model Persistence:** Serializing the best performing ensemble model, baseline model, and vectorizer using `joblib`.
-8. **Model Testing:** A practical inference function for testing the saved ensemble model on real-world news samples with a multi-tiered confidence scoring system.
+### Models Included:
+1. **Transformer Model (`Fake_News_Detection.ipynb`)**: Leverages the **DistilBERT** architecture for semantic understanding and high-accuracy detection.
+2. **Traditional ML Model (`Fake_News_Detection_Traditional.ipynb`)**: A robust legacy pipeline using **TF-IDF** features and an ensemble of **Logistic Regression, Passive Aggressive, and Linear SVC**.
 
 ---
 
 ## Repository Structure
 
-- `Fake_News_Detection.ipynb`: The main Jupyter Notebook containing the entire pipeline.
-- `datasets/`: Directory containing the datasets used in this project (`WELFake_Dataset.csv` and `IFND_full.csv`).
-- `saved_models/`: Directory where the trained Machine Learning models (base models and the Stacking ensemble) and TF-IDF Vectorizer are serialized.
-- `requirements.txt`: Python dependencies required to run the notebook.
+- `Fake_News_Detection.ipynb`: Main notebook featuring the DistilBERT Transformer model.
+- `Fake_News_Detection_Traditional.ipynb`: Legacy notebook featuring the TF-IDF and Stacking Ensemble models.
+- `documents/`: Contains the project `Synopsis.md` and `Project_Report.md`.
+- `datasets/`: Directory for `WELFake_Dataset.csv` and `IFND_full.csv`.
+- `saved_models/`: Serialized models and vectorizers.
+- `requirements.txt`: Python dependencies for both models.
 
 ---
 
