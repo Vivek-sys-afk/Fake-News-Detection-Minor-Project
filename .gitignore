@@ -8,6 +8,7 @@ __pycache__/
 
 # Datasets & Models (Very important to ignore large files)
 datasets/
+results/
 saved_models/
 *.csv
 *.tsv

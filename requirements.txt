@@ -1,11 +1,15 @@
 # Project packages
+# test comment
 pandas
 numpy
 matplotlib
 seaborn
 scikit-learn
 nltk
-joblib
 jupyter
 notebook
 wordcloud
+# Transformer / Deep Learning packages
+torch
+transformers
+accelerate
